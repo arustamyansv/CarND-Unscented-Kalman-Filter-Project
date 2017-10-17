@@ -2,6 +2,7 @@
 #define UKF_H
 
 #include "measurement_package.h"
+#include "tools.h"
 #include "Eigen/Dense"
 #include <vector>
 #include <string>
@@ -67,6 +68,11 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
 
+  ///* NIS for radar
+  double NIS_radar_;
+
+  ///* NIS for laser
+  double NIS_laser_;
 
   /**
    * Constructor
@@ -89,19 +95,39 @@ public:
    * matrix
    * @param delta_t Time between k and k+1 in s
    */
-  void Prediction(double delta_t);
+  void Predict(double delta_t);
 
   /**
    * Updates the state and the state covariance matrix using a laser measurement
-   * @param meas_package The measurement at k+1
+   * @param z The measurement at k+1
    */
-  void UpdateLidar(MeasurementPackage meas_package);
+  void UpdateLidar(VectorXd &z);
 
   /**
    * Updates the state and the state covariance matrix using a radar measurement
-   * @param meas_package The measurement at k+1
+   * @param z The measurement at k+1
    */
-  void UpdateRadar(MeasurementPackage meas_package);
+  void UpdateRadar(VectorXd &z);
+
+  /**
+   * Run the exact update process of process matrix and state vector
+   * @param Tc The cross correlation matrix
+   * @param S The measurement covariance matrix S
+   * @param z_diff The residual
+   */
+  void Update(MatrixXd &Tc, MatrixXd &S, VectorXd &z_diff);
+
+  /**
+   * Small helper method that will generate mean predicted measurement
+   * @param n_z number of measurement dimentions
+   * @param Zsig measurement model
+   */
+  VectorXd GetMeanPredictedMeasurement(int n_z, MatrixXd &Zsig);
+
+private:
+  Tools tools;
+
+  double CalculateNIS(VectorXd &z_diff, MatrixXd &S);
 };
 
 #endif /* UKF_H */
